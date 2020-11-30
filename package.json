@@ -1,0 +1,29 @@
+{
+  "name": "funding-predict",
+  "version": "1.0.0",
+  "description": "Funding Prediction",
+  "main": "index.js",
+  "scripts": {
+    "data": "node --experimental-modules data/index.js",
+    "start": "vue serve src/App.vue",
+    "build": "vue build src/App.vue",
+    "deploy": "firebase deploy",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riyazshaikh/funding-predict.git"
+  },
+  "author": "Riyaz Shaikh",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/riyazshaikh/funding-predict/issues"
+  },
+  "homepage": "https://github.com/riyazshaikh/funding-predict#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "pg": "^8.5.1",
+    "write-json-file": "^4.3.0"
+  }
+}
