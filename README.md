@@ -6,7 +6,7 @@ This project aims to predict funding based on crunchbase data. It consists of 2 
 ## Usage
 [Live Demo](https://ventures-645.web.app)
 
-The demo allows you to do the following:
+The demo allows you to:
 1. Choose features for prediction (expensive to consider all of them)
 2. Train a simple neural network i.e. Sequential MLP with single hidden layer
 3. Observe training performance, and increase training epochs if necessary
@@ -15,7 +15,7 @@ The demo allows you to do the following:
 Note that some feature combinations may cause performance issues. Please be patient if the browser seems unresponsive. Refresh page if out of memory.
 
 ## Setup Web App
-The Web App was built using (Vue CLI Instant Prototyping)[https://cli.vuejs.org/guide/prototyping.html], so requires the following global packages.
+The Web App was built using [Vue CLI Instant Prototyping](https://cli.vuejs.org/guide/prototyping.html), so requires the following global packages.
 
 ```sh
 npm install -g @vue/cli @vue/cli-service-global
