@@ -5,6 +5,7 @@ This project aims to predict funding based on crunchbase data. It consists of 2 
 
 ## Usage
 [Live Demo](https://ventures-645.web.app)
+
 The demo allows you to do the following:
 1. Choose features for prediction (expensive to consider all of them)
 2. Train a simple neural network i.e. Sequential MLP with single hidden layer
