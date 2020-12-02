@@ -16,7 +16,7 @@ Note that some feature combinations may cause performance issues. Please be pati
 
 ## Setup Data Loader
 First configure database connectivity by entering credentials in .env file. No need for SSL when connecting locally.
-```
+```sh
 HOSTNAME=localhost
 DATABASE=postgres
 USERNAME=postgres
@@ -27,23 +27,23 @@ PASSWORD=postgres
 ```
 
 Then run the following command to generate companies.json.
-````
+````sh
 npm i && npm run data
 ```
 
 ## Setup Web App
 The Web App was built using (Vue CLI Instant Prototyping)[https://cli.vuejs.org/guide/prototyping.html], so requires the following global packages.
 
-```
+```sh
 npm install -g @vue/cli @vue/cli-service-global
 ```
 
 To run locally
-```
+```sh
 npm run start
 ```
 
 To build for deployment
-```
+```sh
 npm run build
 ```
