@@ -28,7 +28,7 @@
         >Train & Predict</button>
         <div class="result">{{result}}</div>        
         <div v-if="predicted">
-            <h3>Predictions</h3>
+            <h3>Predictions for companies founded in the past 24 months</h3>
             <vue-good-table
                 :rows="testingData"
                 :columns="displayCols"
