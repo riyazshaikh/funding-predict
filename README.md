@@ -1,17 +1,17 @@
 # funding-predict
 This project aims to predict funding based on crunchbase data. It consists of 2 parts:
 * A data loader that outputs a json list of crunchbase organizations along with details of latest funding
-* A web app that uses (ml5.js)[https://learn.ml5js.org] to train + classify model for predicting funding
+* A web app that uses [ml5.js](https://learn.ml5js.org) to train a neural network in the browser
 
 ## Usage
-(Live Demo)[https://ventures-645.web.app]
+[Live Demo](https://ventures-645.web.app)
 The demo allows you to do the following:
 1. Choose features for prediction (expensive to consider all of them)
 2. Train a simple neural network i.e. Sequential MLP with single hidden layer
 3. Observe training performance, and increase training epochs if necessary
-4. Test prediction by entering an input combination
+4. View predictions for companies founded within last 2 years, and compare accuracy
 
-Note that some feature combinations may cause performance issues. Please be patient if the browser seems unresponsive.
+Note that some feature combinations may cause performance issues. Please be patient if the browser seems unresponsive. Refresh page if out of memory.
 
 ## Setup Data Loader
 First configure database connectivity by entering credentials in .env file. No need for SSL when connecting locally.

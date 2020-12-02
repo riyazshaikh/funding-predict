@@ -105,3 +105,6 @@ dist
 
 # Firebase config
 .firebase/
+
+# Package lock unnecessary
+package-lock.json
