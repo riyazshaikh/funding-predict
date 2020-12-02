@@ -23,17 +23,14 @@ if (process.env.SSL_CA && process.env.SSL_KEY && process.env.SSL_CERT) {
 const company_fields = [
 	'name',
 	'permalink',
-	'website',
-	'regions',
-	'sectors',
 	'total_funding_usd',
-	'number_of_investments',
 	'founded_date',
 	'headquarters'
 ].map(str => 'C1.' + str).join(',')
 const funding_fields = [
 	'startup_permalink',
 	'funding_type',
+	'announced_on',
 	'series'
 ].map(str => 'C2.' + str).join(',')
 
@@ -50,9 +47,7 @@ const fetch = async () => {
 	try {
 		await client.connect();
 		const { rows: companies } = await client.query(query);
-		return {
-			companies
-		}
+		return companies;
 	} catch(e) {
 		console.error('error', e.stack);
 	} finally {

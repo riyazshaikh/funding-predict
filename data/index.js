@@ -2,6 +2,13 @@ import DataLoader from './loader.js'
 import writeJsonFile from 'write-json-file'
 
 (async () => {
-	const data = await DataLoader.fetch();
-	await writeJsonFile('companies.json', data);
+	let data = await DataLoader.fetch();
+	data.forEach(item => {
+		['founded_date', 'announced_on'].forEach(key => {
+			if (item[key]) {
+				item[key] = new Date(item[key]).getTime();
+			}
+		})
+	})
+	await writeJsonFile('dist/companies.json', data);
 })();
