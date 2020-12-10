@@ -1,6 +1,7 @@
 import fs from 'fs'
 import dotenv from 'dotenv'
-import pg from 'pg';
+import pg from 'pg'
+import QueryStream from 'pg-query-stream'
 
 // Load environment variables
 dotenv.config();
@@ -23,36 +24,45 @@ if (process.env.SSL_CA && process.env.SSL_KEY && process.env.SSL_CERT) {
 const company_fields = [
 	'name',
 	'permalink',
+	'sectors',
 	'total_funding_usd',
 	'founded_date',
 	'headquarters'
 ].map(str => 'C1.' + str).join(',')
+
 const funding_fields = [
-	'startup_permalink',
-	'funding_type',
 	'announced_on',
 	'series'
 ].map(str => 'C2.' + str).join(',')
 
-// Select all organizations and join latest funding info
-const query = `SELECT ${company_fields}, ${funding_fields} FROM crunchbase_organizations
-				C1 LEFT JOIN crunchbase_funding_rounds C2
-				ON C2.id = (SELECT id FROM crunchbase_funding_rounds C3
-					WHERE C1.permalink = C3.startup_permalink ORDER BY C3.announced_on DESC LIMIT 1
-				)`
+const investor_fields = [
+	'investor_permalink',
+].map(str => 'C3.' + str).join(',')
 
-// Fetch all the data needed
-const fetch = async () => {
+// Select all organizations and join with fundings and investors
+const query = `SELECT ${company_fields}, ${funding_fields}, ${investor_fields}
+				FROM crunchbase_organizations C1
+				LEFT JOIN crunchbase_funding_rounds C2
+				ON C1.permalink = C2.startup_permalink
+				LEFT JOIN crunchbase_funding_round_investors C3
+				ON C3.funding_round_uuid = C2.uuid
+				ORDER BY C1.permalink, C2.announced_on ASC`
+
+// Fetch data as a stream and process via callbacks
+const stream = async (opts = {}) => {
 	const client = new pg.Client(config)
 	try {
 		await client.connect();
-		const { rows: companies } = await client.query(query);
-		return companies;
+		const stream = client.query(new QueryStream(query));
+		stream.on('data', opts.onData);
+		stream.on('end', () => {
+			client.end();
+			opts.onEnd();
+		});
 	} catch(e) {
 		console.error('error', e.stack);
-	} finally {
 		client.end();
 	}
 }
 
-export default { fetch }
+export default { stream }
