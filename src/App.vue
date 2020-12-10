@@ -5,6 +5,7 @@
             <h3>Input features</h3>
             <select v-model="features" multiple>
                 <option
+                    class="capitalize"
                     v-for="opt in featureOpts"
                     :key="opt"
                     :value="opt"
@@ -13,6 +14,7 @@
             <h3>Predicted feature</h3>
             <select v-model="prediction">
                 <option
+                    class="capitalize"
                     v-for="opt in predictOpts"
                     :key="opt"
                     :value="opt"
@@ -28,7 +30,7 @@
         >Train & Predict</button>
         <div class="result">{{result}}</div>        
         <div v-if="predicted">
-            <h3>Predictions for companies founded in the past 24 months</h3>
+            <h3>Most promising companies founded since {{yearFormatter.format(cutoffDate)}}</h3>
             <vue-good-table
                 :rows="testingData"
                 :columns="displayCols"
@@ -63,12 +65,12 @@ export default {
             epochs: 5,
             cutoffDate: new Date(2019,0,1).getTime(),
             monthFormatter: new Intl.DateTimeFormat('en', { month: 'long' }),
-            yearFormatter: new Intl.DateTimeFormat('en', { year: 'numeric' }),
+            yearFormatter: new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short' }),
             numFormatter: new Intl.NumberFormat('en-US', { notation: 'compact' }),
-            features: ['american', 'funding_after'],
-            featureOpts: ['american', 'funding_after', 'founded_month'],
-            prediction: 'series',
-            predictOpts: ['series', 'funding_type', 'series_b_plus'],
+            features: ['sectors', 'funding_after', 'founded_month'],
+            featureOpts: ['sectors', 'funding_after', 'founded_month'],
+            prediction: 'series_b_plus',
+            predictOpts: ['series_b_plus'],
             trainingData: [],
             testingData: [],
             pageOpts: {
@@ -93,41 +95,42 @@ export default {
                 formatFn: val => this.yearFormatter.format(new Date(val)),
                 filterOptions: { enabled: true }
             }, {
-                label: 'Funding',
-                field: 'total_funding_usd',
-                type: 'number',
-                formatFn: val => '$' + this.numFormatter.format(val),
-                filterOptions: { enabled: true }
-            }, {
-                label: 'Funding Type',
-                field: 'funding_type',
+                label: 'Sectors',
+                field: 'sectors',
+                tdClass: 'capitalize',
+                formatFn: val => val ? val.map(this.formatKey).join(', ') : '',
                 filterOptions: {
                     enabled: true,
-                    filterDropdownItems: this.uniqueOpts('funding_type', this.testingData)
+                    filterDropdownItems: this.uniqueOpts('sectors', this.testingData)
+                }
+            }, {
+                label: 'Seed Investors',
+                field: 'seed_investor',
+                tdClass: 'capitalize',
+                formatFn: val => val ? val.map(this.formatKey).join(', ') : '',
+                filterOptions: {
+                    enabled: true,
+                    filterDropdownItems: this.uniqueOpts('seed_investor', this.testingData)
                 }
             }, {
                 label: 'Series',
                 field: 'series',
+                formatFn: (val, obj) => obj.series ? obj.series.join(', ') : '',
                 filterOptions: {
                     enabled: true,
                     filterDropdownItems: this.uniqueOpts('series', this.testingData)
                 }
             }, {
-                label: 'Series B Plus',
-                field: 'series_b_plus',
-                formatFn: (val, obj) => obj.series ? val : '',
-                filterOptions: { enabled: true }
-            }, {
-                label: 'Prediction for ' + this.prediction,
+                label: 'Probability of ' + this.formatKey(this.prediction),
                 field: 'prediction',
-                filterOptions: { enabled: true }            
+                type: 'percentage'
             }]
         },
         sortOpts() {
             return {
                 enabled: true,
                 initialSortBy: {
-                    field: this.prediction,
+                    field: 'prediction',
                     type: 'desc'
                 }
             }
@@ -135,9 +138,6 @@ export default {
     },
     watch: {
         features() {
-            this.init();
-        },
-        prediction() {
             this.init();
         }
     },
@@ -147,7 +147,7 @@ export default {
     methods: {
         fetchData() {
             this.result = 'Loading data...';
-            return fetch('https://ventures-645.web.app/companies.json')
+            return fetch('https://ventures-645.web.app/data/companies.json')
                 .then(response => response.json())
                 .then(this.processData);
         },
@@ -156,12 +156,9 @@ export default {
                 [...Object.keys(item), ...this.featureOpts, ...this.predictOpts].forEach(key => {
                     item[key] = this.convertValue(key, item);
                 })
-                if (!item.founded_date || !item.permalink || !item.series) {
-                    return;
-                }
-                if (item.founded_date < this.cutoffDate) {
+                if (item.total_funding_usd > 0) {
                     this.trainingData.push(item);
-                } else {
+                } else if (item.founded_date > this.cutoffDate) {
                     this.testingData.push(item);
                 }
             })
@@ -191,7 +188,8 @@ export default {
             this.inProgress = true;
             this.trainingData.forEach(item => {
                 let data = this.features.reduce((set, key) => {
-                    set[key] = item[key];
+                    let val = item[key];
+                    set[key] = Array.isArray(val) ? val[val.length-1] || '' : val;
                     return set;
                 }, {});
                 this.nn.addData(data, {
@@ -213,7 +211,7 @@ export default {
             }
         },
         whileTraining(epoch, logs) {
-            this.result = `Epoch: ${epoch+1} - loss: ${logs.loss.toFixed(2)}`;
+            this.result = `Epoch: ${epoch} - loss: ${logs.loss.toFixed(2)}`;
         },
         finishedTraining() {
             this.result = `Predicting ${this.testingData.length} data points...`;
@@ -222,12 +220,13 @@ export default {
         predict() {
             this.testingData.forEach(item => {
                 const inputs = this.features.reduce((set, key) => {
-                    set[key] = item[key];
+                    const val = item[key];
+                    set[key] = Array.isArray(val) ? val[val.length-1] || '' : val;
                     return set;
                 }, {});
                 try {
                     const results = this.nn.classifySync(inputs);
-                    item.prediction = results[0].label;
+                    item.prediction = results.find(r => r.label == 'yes').confidence;
                 } catch(e) {
                     this.result = e.toString();
                     console.error(e);
@@ -235,31 +234,19 @@ export default {
             });
             this.predicted = true;
             this.inProgress = false;
-            this.showAccuracy();
+            this.result = '';
             this.hideVisor();
-        },
-        showAccuracy() {
-            const accurate = this.testingData.filter(item => item.prediction == item[this.prediction]);
-            const accuracy = (accurate.length / this.testingData.length * 100).toFixed(2);
-            this.result = `Accuracy = ${accuracy}%`;
         },
         convertValue(key, obj) {
             switch(key) {
-                case 'american':
-                    // interpret 2 character ending as american state
-                    return this.convertValue('state', obj).length == 2 ? 'yes' : 'no';
                 case 'founded_month':
                     return this.monthFormatter.format(new Date(obj.founded_date));
                 case 'funding_after':
-                    return obj.announced_on - obj.founded_date;
+                    return Math.max(0, Math.min(Date.now(), Math.min(...obj.announced_on) - obj.founded_date))
                 case 'series_b_plus':
-                    return obj.series && obj.series.length == 1 && obj.series > 'B' ? 'yes' : 'no';
-                case 'state':
-                    return obj.headquarters && obj.headquarters.split(', ')[1] || '';
-                case 'announced_on':
-                case 'founded_date':
+                    return obj.series && obj.series.includes('B') ? 'yes' : 'no';
                 case 'total_funding_usd':
-                    return obj[key] ? Number(obj[key]) : 0;
+                    return obj[key] || 0;
                 default:
                     return obj[key] || '';
             }
@@ -269,11 +256,13 @@ export default {
             document.querySelector('.visor-controls button:last-child').click();            
         },
         formatKey(key) {
-            return key.replace(/_/g,' ').replace(/([A-Z][a-z])/g, ' $1');
+            return key.replace(/[_\\-]/g,' ');
         },
         uniqueOpts(key, data) {
-            const vals = data.map(item => item[key]);
-            return [...new Set(vals)].filter(item => !!item);
+            const vals = data.map(item => item[key])
+                            .filter(item => !!item)
+                            .reduce((arr, item) => arr.concat(item), []);
+            return [...new Set(vals)];
         }
     }
 }
@@ -285,7 +274,7 @@ body {
 button {
     margin: 1em 0;
 }
-label, option {
+.capitalize {
     text-transform: capitalize;
 }
 h3 {

@@ -10,7 +10,7 @@ The demo allows you to:
 1. Choose features for prediction (expensive to consider all of them)
 2. Train a simple neural network i.e. Sequential MLP with single hidden layer
 3. Observe training performance, and increase training epochs if necessary
-4. View predictions for companies founded within last 2 years, and compare accuracy
+4. View most promising companies founded since Jan 2019
 
 Note that some feature combinations may cause performance issues. Please be patient if the browser seems unresponsive. Refresh page if out of memory.
 
